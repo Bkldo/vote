@@ -89,7 +89,7 @@ async function handleSearch(historyQuery = null) {
             
             if (result) {
                 displayResult(result);
-                saveHistory(query);
+                saveHistory(query, result);
             } else {
                 showError();
             }
@@ -101,7 +101,7 @@ async function handleSearch(historyQuery = null) {
 
             if (data.status === "success" && data.data) {
                 displayResult(data.data);
-                saveHistory(query);
+                saveHistory(query, data.data);
             } else {
                 showError();
             }
@@ -137,7 +137,7 @@ function showError() {
 // ==========================================
 // ฟังก์ชันจัดการประวัติการค้นหา (Local Storage)
 // ==========================================
-function saveHistory(query) {
+function saveHistory(query, data) {
     // ดึงประวัติเก่า
     let history = JSON.parse(localStorage.getItem('voterSearchHistory')) || [];
     
@@ -148,7 +148,7 @@ function saveHistory(query) {
     const now = new Date();
     const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
-    history.unshift({ query: query, date: dateStr });
+    history.unshift({ query: query, date: dateStr, data: data });
     
     // จำกัดแค่ 5 รายการล่าสุด
     if (history.length > 5) {
@@ -170,21 +170,57 @@ function renderHistory() {
         
         history.forEach(item => {
             const div = document.createElement('div');
-            div.className = 'history-item';
-            div.innerHTML = `
-                <div>
-                    <div class="history-name">${item.query}</div>
-                    <div class="history-date"><i class="fa-regular fa-clock"></i> ${item.date}</div>
-                </div>
-                <i class="fa-solid fa-chevron-right" style="color: var(--primary-color);"></i>
-            `;
             
-            // เมื่อคลิกประวัติ ให้ทำการค้นหาใหม่
-            div.addEventListener('click', () => {
-                searchInput.value = item.query;
-                navSearch.click(); // กลับไปหน้าค้นหา
-                handleSearch(item.query);
-            });
+            // หากมีข้อมูลผลลัพธ์ (รูปแบบใหม่)
+            if (item.data) {
+                div.className = 'result-card';
+                div.style.marginBottom = '15px';
+                div.style.borderColor = '#e2e8f0'; // ให้สีขอบอ่อนลงกว่าปกติ
+                div.innerHTML = `
+                    <div class="result-header" style="background-color: var(--light-blue); color: var(--text-main); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+                        <h2 style="font-size: 15px; font-weight: 600;"><i class="fa-solid fa-clock-rotate-left" style="font-size: 13px; color: var(--primary-color);"></i> ค้นหา: ${item.query}</h2>
+                        <span style="font-size: 12px; color: var(--text-muted);">${item.date}</span>
+                    </div>
+                    <div class="result-body" style="padding: 15px;">
+                        <div class="info-row">
+                            <span class="info-label">ลำดับที่</span>
+                            <span class="info-value highlight-text">${item.data.no || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">ชื่อ-สกุล</span>
+                            <span class="info-value highlight-text">${item.data.name || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">สังกัด</span>
+                            <span class="info-value">${item.data.dept || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">หน่วยเลือกตั้งที่</span>
+                            <span class="info-value">${item.data.stationNo || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">ที่เลือกตั้ง</span>
+                            <span class="info-value">${item.data.location || '-'}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // รูปแบบเก่า (เผื่อมีคนเคยค้นหาไปแล้ว)
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div>
+                        <div class="history-name">${item.query}</div>
+                        <div class="history-date"><i class="fa-regular fa-clock"></i> ${item.date}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: var(--primary-color);"></i>
+                `;
+                
+                div.addEventListener('click', () => {
+                    searchInput.value = item.query;
+                    navSearch.click(); // กลับไปหน้าค้นหา
+                    handleSearch(item.query);
+                });
+            }
             
             historyList.appendChild(div);
         });

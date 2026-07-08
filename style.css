@@ -191,6 +191,12 @@ body {
     color: var(--text-main);
 }
 
+.highlight-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
 .btn-outline {
     width: 100%;
     background-color: transparent;
