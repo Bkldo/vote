@@ -1,7 +1,7 @@
 // ==========================================
 // การตั้งค่า API (นำ URL ที่ได้จากการ Deploy Apps Script มาใส่ที่นี่)
 // ==========================================
-const API_URL = "https://script.google.com/macros/s/AKfycbwiLxCRm-PSCKWCZ6-P4CwLuqvWcc5i-WY0TS8sKwKKDcYu1hQP6Xk3vpI6ILZM76C5/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbztu_2SFYJaRZUz5R2E0aHg6El8rigVHUH7qOcxFOqGHUy3mV_j0beuvQVGNfqTu2Iv/exec";
 
 // ==========================================
 // ตัวแปรอ้างอิง DOM Elements
@@ -107,8 +107,10 @@ async function handleSearch(historyQuery = null) {
                 const data = JSON.parse(textData);
                 
                 if (data.status === "success" && data.data) {
-                    displayResult(data.data);
-                    saveHistory(query, data.data);
+                    // รองรับทั้ง object เดี่ยว (เวอร์ชันเก่า) และ array (เวอร์ชันใหม่)
+                    const resultsArray = Array.isArray(data.data) ? data.data : [data.data];
+                    displayResult(resultsArray);
+                    saveHistory(query, resultsArray);
                 } else {
                     showError();
                 }
