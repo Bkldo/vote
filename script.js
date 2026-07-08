@@ -79,13 +79,17 @@ async function handleSearch(historyQuery = null) {
             console.warn("ยังไม่ได้ตั้งค่า API_URL, ใช้งาน Mock Data");
             await new Promise(resolve => setTimeout(resolve, 1000)); // จำลองการโหลด
             
-            // จำลองการค้นหา
+            // จำลองการค้นหาแบบยืดหยุ่น (เจอทุกคำที่พิมพ์มา)
             const mockData = [
-                { no: "1", name: "ปิยะธิดา ใจดี", dept: "ฝ่ายปกครอง", stationNo: "1", location: "อาคาร 1 สำนักงานเขต" },
-                { no: "2", name: "สมชาย รักชาติ", dept: "ฝ่ายการศึกษา", stationNo: "2", location: "โรงเรียนเทศบาล" }
+                { no: "1", name: "นางปิยะธิดา ใจดี", dept: "ฝ่ายปกครอง", stationNo: "1", location: "อาคาร 1 สำนักงานเขต" },
+                { no: "2", name: "นายสมชาย รักชาติ", dept: "ฝ่ายการศึกษา", stationNo: "2", location: "โรงเรียนเทศบาล" }
             ];
             
-            const result = mockData.find(item => item.name.includes(query));
+            const searchTerms = query.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
+            const result = mockData.find(item => {
+                const nameStr = item.name.toLowerCase();
+                return searchTerms.every(term => nameStr.includes(term));
+            });
             
             if (result) {
                 displayResult(result);
