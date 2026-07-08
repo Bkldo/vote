@@ -14,12 +14,8 @@ const errorMessage = document.getElementById('error-message');
 const infoCards = document.getElementById('info-cards');
 const saveImgBtn = document.getElementById('save-img-btn');
 
-// ข้อมูลผลลัพธ์
-const resNo = document.getElementById('res-no');
-const resName = document.getElementById('res-name');
-const resDept = document.getElementById('res-dept');
-const resStationNo = document.getElementById('res-station-no');
-const resLocation = document.getElementById('res-location');
+// ข้อมูลผลลัพธ์ (จะถูกสร้างแบบ Dynamic)
+const resultCardCapture = document.getElementById('result-card-capture');
 
 // Navigation & Views
 const navSearch = document.getElementById('nav-search');
@@ -130,13 +126,43 @@ async function handleSearch(historyQuery = null) {
 // ==========================================
 // แสดงผลลัพธ์ & ข้อผิดพลาด
 // ==========================================
-function displayResult(data) {
-    // กำหนดค่าให้ DOM
-    resNo.textContent = data.no || '-';
-    resName.textContent = data.name || '-';
-    resDept.textContent = data.dept || '-';
-    resStationNo.textContent = data.stationNo || '-';
-    resLocation.textContent = data.location || '-';
+function displayResult(dataArray) {
+    // Clear old results
+    resultCardCapture.innerHTML = '';
+    
+    // วนลูปสร้างการ์ดผลลัพธ์
+    dataArray.forEach((data, index) => {
+        const cardHTML = `
+            <div class="result-card">
+                <div class="result-header">
+                    <h2>ผลการค้นหา ${dataArray.length > 1 ? `(${index + 1}/${dataArray.length})` : ''}</h2>
+                </div>
+                <div class="result-body">
+                    <div class="info-row">
+                        <span class="info-label">ลำดับที่</span>
+                        <span class="info-value highlight-text">${data.no || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ชื่อ-สกุล</span>
+                        <span class="info-value highlight-text">${data.name || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">สังกัด</span>
+                        <span class="info-value">${data.dept || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">หน่วยเลือกตั้งที่</span>
+                        <span class="info-value">${data.stationNo || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ที่เลือกตั้ง</span>
+                        <span class="info-value">${data.location || '-'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        resultCardCapture.innerHTML += cardHTML;
+    });
 
     // แสดงส่วนผลลัพธ์
     resultSection.classList.remove('hidden');
@@ -186,6 +212,10 @@ function renderHistory() {
             
             // หากมีข้อมูลผลลัพธ์ (รูปแบบใหม่)
             if (item.data) {
+                // รองรับทั้งแบบเก่าที่เป็น object และแบบใหม่ที่เป็น array
+                const dataObj = Array.isArray(item.data) ? item.data[0] : item.data;
+                const moreCount = Array.isArray(item.data) && item.data.length > 1 ? ` (+อีก ${item.data.length - 1} รายการ)` : '';
+
                 div.className = 'result-card';
                 div.style.marginBottom = '15px';
                 div.style.borderColor = '#e2e8f0'; // ให้สีขอบอ่อนลงกว่าปกติ
@@ -195,25 +225,28 @@ function renderHistory() {
                         <span style="font-size: 12px; color: var(--text-muted);">${item.date}</span>
                     </div>
                     <div class="result-body" style="padding: 15px;">
+                        <div class="info-row" style="margin-bottom: 10px; font-size: 14px; color: var(--primary-color); font-weight: 500;">
+                            พบทั้งหมด ${Array.isArray(item.data) ? item.data.length : 1} รายการ (แสดงรายการแรก)
+                        </div>
                         <div class="info-row">
                             <span class="info-label">ลำดับที่</span>
-                            <span class="info-value highlight-text">${item.data.no || '-'}</span>
+                            <span class="info-value highlight-text">${dataObj.no || '-'}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">ชื่อ-สกุล</span>
-                            <span class="info-value highlight-text">${item.data.name || '-'}</span>
+                            <span class="info-value highlight-text">${dataObj.name || '-'}${moreCount}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">สังกัด</span>
-                            <span class="info-value">${item.data.dept || '-'}</span>
+                            <span class="info-value">${dataObj.dept || '-'}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">หน่วยเลือกตั้งที่</span>
-                            <span class="info-value">${item.data.stationNo || '-'}</span>
+                            <span class="info-value">${dataObj.stationNo || '-'}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">ที่เลือกตั้ง</span>
-                            <span class="info-value">${item.data.location || '-'}</span>
+                            <span class="info-value">${dataObj.location || '-'}</span>
                         </div>
                     </div>
                 `;
@@ -258,7 +291,7 @@ saveImgBtn.addEventListener('click', () => {
     }).then(canvas => {
         // สร้าง link สำหรับดาวน์โหลด
         const link = document.createElement('a');
-        link.download = `ข้อมูลสิทธิเลือกตั้ง_${resName.textContent.replace(/\s+/g, '_')}.png`;
+        link.download = `ข้อมูลสิทธิเลือกตั้ง.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
         

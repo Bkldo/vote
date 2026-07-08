@@ -49,32 +49,8 @@
 
             <!-- Results Section (Hidden by default) -->
             <div id="result-section" class="result-section hidden">
-                <div class="result-card" id="result-card-capture">
-                    <div class="result-header">
-                        <h2>ผลการค้นหา</h2>
-                    </div>
-                    <div class="result-body">
-                        <div class="info-row">
-                            <span class="info-label">ลำดับที่</span>
-                            <span class="info-value highlight-text" id="res-no">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ชื่อ-สกุล</span>
-                            <span class="info-value highlight-text" id="res-name">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">สังกัด</span>
-                            <span class="info-value" id="res-dept">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">หน่วยเลือกตั้งที่</span>
-                            <span class="info-value" id="res-station-no">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ที่เลือกตั้ง</span>
-                            <span class="info-value" id="res-location">-</span>
-                        </div>
-                    </div>
+                <!-- Cards will be injected here dynamically -->
+                <div id="result-card-capture" style="display: flex; flex-direction: column; gap: 15px;">
                 </div>
                 <div class="result-footer">
                     <button id="save-img-btn" class="btn-outline">
