@@ -94,8 +94,11 @@ async function handleSearch(historyQuery = null) {
                 showError();
             }
         } else {
-            // เรียกใช้งาน API จริง พร้อมใส่ t (timestamp) เพื่อป้องกันเบราว์เซอร์จำค่าเก่า (Cache)
-            const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}&t=${new Date().getTime()}`);
+            // เรียกใช้งาน API จริง — บังคับไม่ใช้ cache + ตาม redirect
+            const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}&t=${new Date().getTime()}`, {
+                cache: 'no-store',
+                redirect: 'follow'
+            });
             
             // อ่านค่าเป็น text ก่อนเพื่อตรวจสอบ
             const textData = await response.text();
