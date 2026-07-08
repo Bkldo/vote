@@ -99,14 +99,23 @@ async function handleSearch(historyQuery = null) {
             }
         } else {
             // เรียกใช้งาน API จริง
-            // ส่ง parameter 'q' ไปยัง Apps Script
             const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
-            const data = await response.json();
-
-            if (data.status === "success" && data.data) {
-                displayResult(data.data);
-                saveHistory(query, data.data);
-            } else {
+            
+            // อ่านค่าเป็น text ก่อนเพื่อตรวจสอบ
+            const textData = await response.text();
+            
+            try {
+                const data = JSON.parse(textData);
+                
+                if (data.status === "success" && data.data) {
+                    displayResult(data.data);
+                    saveHistory(query, data.data);
+                } else {
+                    showError();
+                }
+            } catch (parseError) {
+                console.error("API ไม่ได้ตอบกลับเป็น JSON (อาจเป็นปัญหาเรื่องสิทธิ์การเข้าถึง Web App):", textData.substring(0, 100));
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาตรวจสอบการตั้งค่าสิทธิ์ 'ผู้ที่มีสิทธิ์เข้าถึง: ทุกคน' ใน Apps Script");
                 showError();
             }
         }
