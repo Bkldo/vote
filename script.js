@@ -1,7 +1,7 @@
 // ==========================================
 // การตั้งค่า API (นำ URL ที่ได้จากการ Deploy Apps Script มาใส่ที่นี่)
 // ==========================================
-const API_URL = "https://script.google.com/macros/s/AKfycbztu_2SFYJaRZUz5R2E0aHg6El8rigVHUH7qOcxFOqGHUy3mV_j0beuvQVGNfqTu2Iv/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwiLxCRm-PSCKWCZ6-P4CwLuqvWcc5i-WY0TS8sKwKKDcYu1hQP6Xk3vpI6ILZM76C5/exec";
 
 // ==========================================
 // ตัวแปรอ้างอิง DOM Elements
