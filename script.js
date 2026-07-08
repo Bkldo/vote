@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // การตั้งค่า API (นำ URL ที่ได้จากการ Deploy Apps Script มาใส่ที่นี่)
 // ==========================================
 const API_URL = "https://script.google.com/macros/s/AKfycbwiLxCRm-PSCKWCZ6-P4CwLuqvWcc5i-WY0TS8sKwKKDcYu1hQP6Xk3vpI6ILZM76C5/exec";
@@ -94,29 +94,15 @@ async function handleSearch(historyQuery = null) {
                 showError();
             }
         } else {
-            // เรียกใช้งาน API จริง — บังคับไม่ใช้ cache + ตาม redirect
-            const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}&t=${new Date().getTime()}`, {
-                cache: 'no-store',
-                redirect: 'follow'
-            });
+            const data = await fetchVoterData(query);
             
-            // อ่านค่าเป็น text ก่อนเพื่อตรวจสอบ
-            const textData = await response.text();
-            
-            try {
-                const data = JSON.parse(textData);
-                
-                if (data.status === "success" && data.data) {
-                    // รองรับทั้ง object เดี่ยว (เวอร์ชันเก่า) และ array (เวอร์ชันใหม่)
-                    const resultsArray = Array.isArray(data.data) ? data.data : [data.data];
-                    displayResult(resultsArray);
-                    saveHistory(query, resultsArray);
-                } else {
-                    showError();
-                }
-            } catch (parseError) {
-                console.error("API ไม่ได้ตอบกลับเป็น JSON (อาจเป็นปัญหาเรื่องสิทธิ์การเข้าถึง Web App):", textData.substring(0, 100));
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาตรวจสอบการตั้งค่าสิทธิ์ 'ผู้ที่มีสิทธิ์เข้าถึง: ทุกคน' ใน Apps Script");
+            if (data.status === "success" && data.data) {
+                // รองรับทั้ง object เดี่ยว (เวอร์ชันเก่า) และ array (เวอร์ชันใหม่)
+                const resultsArray = Array.isArray(data.data) ? data.data : [data.data];
+                displayResult(resultsArray);
+                saveHistory(query, resultsArray);
+            } else {
+                console.warn("API ตอบกลับว่าไม่พบข้อมูลหรือมีข้อผิดพลาด:", data);
                 showError();
             }
         }
@@ -126,6 +112,51 @@ async function handleSearch(historyQuery = null) {
     } finally {
         loader.classList.add('hidden');
     }
+}
+
+async function fetchVoterData(query) {
+    const url = `${API_URL}?q=${encodeURIComponent(query)}&t=${Date.now()}`;
+    try {
+        const response = await fetch(url, {
+            cache: 'no-store',
+            redirect: 'follow'
+        });
+        const textData = await response.text();
+        return JSON.parse(textData);
+    } catch (error) {
+        console.warn("fetch API ไม่สำเร็จ จะลองโหลดแบบ JSONP แทน:", error);
+        return fetchVoterDataJsonp(query);
+    }
+}
+
+function fetchVoterDataJsonp(query) {
+    return new Promise((resolve, reject) => {
+        const callbackName = `voterCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement('script');
+        const timeoutId = setTimeout(() => {
+            cleanup();
+            reject(new Error('JSONP timeout'));
+        }, 15000);
+
+        function cleanup() {
+            clearTimeout(timeoutId);
+            delete window[callbackName];
+            script.remove();
+        }
+
+        window[callbackName] = (data) => {
+            cleanup();
+            resolve(data);
+        };
+
+        script.onerror = () => {
+            cleanup();
+            reject(new Error('JSONP load error'));
+        };
+
+        script.src = `${API_URL}?q=${encodeURIComponent(query)}&callback=${encodeURIComponent(callbackName)}&t=${Date.now()}`;
+        document.body.appendChild(script);
+    });
 }
 
 // ==========================================
@@ -310,3 +341,4 @@ saveImgBtn.addEventListener('click', () => {
         saveImgBtn.disabled = false;
     });
 });
+
