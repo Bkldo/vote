@@ -103,29 +103,45 @@ async function handleSearch(historyQuery = null) {
                 saveHistory(query, resultsArray);
             } else {
                 console.warn("API ตอบกลับว่าไม่พบข้อมูลหรือมีข้อผิดพลาด:", data);
-                showError();
+                showError(data.message || "ไม่พบข้อมูลผู้มีสิทธิเลือกตั้ง");
             }
         }
     } catch (error) {
         console.error("Error fetching data:", error);
-        showError();
+        showError("เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
     } finally {
         loader.classList.add('hidden');
     }
 }
 
 async function fetchVoterData(query) {
+    const requests = [
+        fetchVoterDataByFetch(query),
+        fetchVoterDataJsonp(query)
+    ];
+
+    try {
+        return await Promise.any(requests);
+    } catch (error) {
+        throw new Error('API timeout or unavailable');
+    }
+}
+
+async function fetchVoterDataByFetch(query) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const url = `${API_URL}?q=${encodeURIComponent(query)}&t=${Date.now()}`;
+
     try {
         const response = await fetch(url, {
             cache: 'no-store',
-            redirect: 'follow'
+            redirect: 'follow',
+            signal: controller.signal
         });
         const textData = await response.text();
         return JSON.parse(textData);
-    } catch (error) {
-        console.warn("fetch API ไม่สำเร็จ จะลองโหลดแบบ JSONP แทน:", error);
-        return fetchVoterDataJsonp(query);
+    } finally {
+        clearTimeout(timeoutId);
     }
 }
 
@@ -136,7 +152,7 @@ function fetchVoterDataJsonp(query) {
         const timeoutId = setTimeout(() => {
             cleanup();
             reject(new Error('JSONP timeout'));
-        }, 15000);
+        }, 8000);
 
         function cleanup() {
             clearTimeout(timeoutId);
@@ -204,7 +220,11 @@ function displayResult(dataArray) {
     resultSection.classList.remove('hidden');
 }
 
-function showError() {
+function showError(message) {
+    const text = errorMessage.querySelector('p');
+    if (text) {
+        text.textContent = message || 'ไม่พบข้อมูลผู้มีสิทธิเลือกตั้ง หรือเกิดข้อผิดพลาด';
+    }
     errorMessage.classList.remove('hidden');
     infoCards.classList.remove('hidden'); // แสดง info กลับมาด้านล่างข้อผิดพลาด
 }
@@ -341,4 +361,7 @@ saveImgBtn.addEventListener('click', () => {
         saveImgBtn.disabled = false;
     });
 });
+
+
+
 
